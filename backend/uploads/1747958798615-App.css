@@ -1,0 +1,42 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.outerdiv{
+
+  width: 1170px;
+  margin: auto;
+}
+.outerdiv ul{
+  margin: 0px;
+  padding: 0px;
+  list-style:none;
+  margin-top: 30px;
+}
+.outerdiv ul li{
+  background-color: black;
+  padding: 10px;
+  color: white;
+  position: relative;
+  text-align: left;
+  font-size: 20px;
+  margin:10px
+
+}
+.outerdiv ul li span{
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+}
