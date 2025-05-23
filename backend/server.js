@@ -9,26 +9,13 @@ const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const archiver = require('archiver');
-const sequelize = require('./config/database');
+const { sequelize, testConnection } = require('./config/database');
 const Session = require('./models/Session');
 const { Op } = require('sequelize');
 
 // Initialize express app
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST']
-  }
-});
-
-// Database connection and sync
-sequelize.sync().then(() => {
-  console.log('Database connected and synced');
-}).catch(err => {
-  console.error('Database connection error:', err);
-});
 
 // Configure Cloudinary
 cloudinary.config({
@@ -40,7 +27,9 @@ cloudinary.config({
 // Middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -427,50 +416,76 @@ app.get('/api/session/:sessionId', async (req, res) => {
   }
 });
 
-// Socket.io connection handling
-io.on('connection', async (socket) => {
-  console.log('New client connected:', socket.id);
-  
-  // Client joins session
-  socket.on('joinSession', async (sessionId) => {
-    try {
-      const session = await Session.findByPk(sessionId);
-      if (session && new Date() <= session.expiresAt) {
-        socket.join(sessionId);
-        console.log(`Client ${socket.id} joined session ${sessionId}`);
-        
-        // Send current session files to the client
-        socket.emit('filesAdded', {
-          files: session.files || [],
-          sessionId
-        });
-      } else {
-        socket.emit('sessionError', { 
-          error: 'Session not found or expired'
-        });
-      }
-    } catch (error) {
-      console.error('Error joining session:', error);
-      socket.emit('sessionError', { 
-        error: 'Error joining session'
-      });
-    }
-  });
-  
-  // Handle disconnection
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
-  });
-});
-
-// Create uploads directory if it doesn't exist
-const uploadsDir = './uploads';
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
-}
-
 // Start the server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`Server listening at http://localhost:${PORT}`);
-});
+
+const startServer = async () => {
+  try {
+    // Test database connection and sync tables
+    await testConnection();
+    await sequelize.sync();
+    console.log('Database synchronized successfully.');
+
+    // Start the server
+    const server = app.listen(PORT, () => {
+      console.log(`Server is listening at http://localhost:${PORT}`);
+    });
+
+    // Initialize Socket.io
+    const io = new Server(server, {
+      cors: {
+        origin: process.env.CLIENT_URL || 'http://localhost:3000',
+        methods: ['GET', 'POST'],
+        credentials: true
+      }
+    });
+
+    // Socket.io connection handling
+    io.on('connection', async (socket) => {
+      console.log('New client connected:', socket.id);
+      
+      // Client joins session
+      socket.on('joinSession', async (sessionId) => {
+        try {
+          const session = await Session.findByPk(sessionId);
+          if (session && new Date() <= session.expiresAt) {
+            socket.join(sessionId);
+            console.log(`Client ${socket.id} joined session ${sessionId}`);
+            
+            // Send current session files to the client
+            socket.emit('filesAdded', {
+              files: session.files || [],
+              sessionId
+            });
+          } else {
+            socket.emit('sessionError', { 
+              error: 'Session not found or expired'
+            });
+          }
+        } catch (error) {
+          console.error('Error joining session:', error);
+          socket.emit('sessionError', { 
+            error: 'Error joining session'
+          });
+        }
+      });
+      
+      // Handle disconnection
+      socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+      });
+    });
+
+    // Create uploads directory if it doesn't exist
+    const uploadsDir = './uploads';
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir);
+    }
+
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();

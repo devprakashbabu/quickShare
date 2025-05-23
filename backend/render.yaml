@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: quickshareqr-backend
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: MYSQL_URL
+        value: mysql://root:vTafAHUqvNfLLwkYCeHuEtuyxwiwmwuV@roundhouse.proxy.rlwy.net:51663/railway
+      - key: MYSQL_DATABASE
+        value: railway
+      - key: DB_HOST
+        value: roundhouse.proxy.rlwy.net
+      - key: DB_USER
+        value: root
+      - key: DB_PASSWORD
+        value: vTafAHUqvNfLLwkYCeHuEtuyxwiwmwuV
+      - key: DB_NAME
+        value: railway
+      - key: DB_PORT
+        value: 51663
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dofjr7o8l
+      - key: CLOUDINARY_API_KEY
+        value: 478477191658683
+      - key: CLOUDINARY_API_SECRET
+        value: s9BmPcCvXj8Z-mKEfy2B42iBy4k
+      - key: CLIENT_URL
+        value: https://quickshareqr.vercel.app 
