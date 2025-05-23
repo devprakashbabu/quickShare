@@ -14,8 +14,8 @@ const App = () => {
   React.useEffect(() => {
     // Log environment variables for debugging
     console.log('Environment Variables:', {
-      API_URL: process.env.REACT_APP_API_URL,
-      SOCKET_URL: process.env.REACT_APP_SOCKET_URL,
+      API_URL: process.env.REACT_APP_API_URL || "https://quickshare-wwjh.onrender.com",
+      SOCKET_URL: process.env.REACT_APP_SOCKET_URL|| "https://quickshare-wwjh.onrender.com",
       NODE_ENV: process.env.NODE_ENV
     });
 
