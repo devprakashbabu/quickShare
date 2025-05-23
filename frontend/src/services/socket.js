@@ -17,14 +17,17 @@ export const initSocket = () => {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'], // Try websocket first, then polling
       withCredentials: true,
-      timeout: 10000,
-      path: '/socket.io',
+      timeout: 20000,
+      path: '/socket.io/',
       autoConnect: true,
       forceNew: true,
       secure: true,
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
+      extraHeaders: {
+        'Access-Control-Allow-Origin': '*'
+      }
     });
     
     socket.on('connect', () => {
@@ -35,8 +38,11 @@ export const initSocket = () => {
     socket.on('disconnect', (reason) => {
       console.log('Socket disconnected. Reason:', reason);
       isConnecting = false;
-      if (reason === 'io server disconnect') {
-        socket.connect();
+      // Try to reconnect on certain disconnect reasons
+      if (reason === 'io server disconnect' || reason === 'transport close') {
+        setTimeout(() => {
+          socket.connect();
+        }, 1000);
       }
     });
     
@@ -52,9 +58,10 @@ export const initSocket = () => {
       });
       isConnecting = false;
       
-      // Try to reconnect with polling if websocket fails
+      // If websocket fails, try polling
       if (socket.io?.engine?.transport?.name === 'websocket') {
-        socket.io.engine.transport.name = 'polling';
+        console.log('WebSocket connection failed, falling back to polling...');
+        socket.io.opts.transports = ['polling'];
         socket.connect();
       }
     });
@@ -68,10 +75,13 @@ export const initSocket = () => {
     setTimeout(() => {
       if (socket && !socket.connected) {
         console.log('Socket connection timeout, attempting to reconnect...');
+        if (socket.io?.engine?.transport?.name === 'websocket') {
+          socket.io.opts.transports = ['polling'];
+        }
         socket.connect();
       }
       isConnecting = false;
-    }, 5000);
+    }, 10000);
   }
   
   return socket;

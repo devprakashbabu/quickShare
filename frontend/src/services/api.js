@@ -10,8 +10,7 @@ const api = axios.create({
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json'
-  },
-  timeout: 10000
+  }
 });
 
 /**
@@ -30,6 +29,11 @@ export const uploadFile = async (file) => {
         'Content-Type': 'multipart/form-data',
       },
       withCredentials: true,
+      timeout: 0, // Disable timeout for file uploads
+      onUploadProgress: (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        console.log(`Upload progress: ${percentCompleted}%`);
+      }
     });
     
     return response.data;
@@ -66,11 +70,12 @@ export const uploadFolder = async (files, folderName, fileMap) => {
       formData.append(`path_${file.name}`, folderPath);
     });
     
-    // Show the upload progress (not fully supported in all browsers)
     const config = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      withCredentials: true,
+      timeout: 0, // Disable timeout for folder uploads
       onUploadProgress: progressEvent => {
         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
         console.log(`Upload progress: ${percentCompleted}%`);

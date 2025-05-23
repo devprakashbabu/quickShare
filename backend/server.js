@@ -435,15 +435,22 @@ const startServer = async () => {
     const io = new Server(server, {
       cors: {
         origin: ['https://quick-share-black.vercel.app', 'http://localhost:3000'],
-        methods: ['GET', 'POST'],
+        methods: ['GET', 'POST', 'OPTIONS'],
         credentials: true,
-        allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
       },
       transports: ['websocket', 'polling'],
       pingTimeout: 60000,
       pingInterval: 25000,
       path: '/socket.io/',
-      serveClient: false
+      serveClient: false,
+      allowEIO3: true,
+      cookie: {
+        name: 'io',
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+      }
     });
 
     // Socket.io connection handling
