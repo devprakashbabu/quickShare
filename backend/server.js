@@ -26,7 +26,7 @@ cloudinary.config({
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'https://quick-share-black.vercel.app'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -434,14 +434,16 @@ const startServer = async () => {
     // Initialize Socket.io
     const io = new Server(server, {
       cors: {
-        origin: process.env.CLIENT_URL || 'http://localhost:3000',
+        origin: ['http://localhost:3000', 'https://quick-share-black.vercel.app'],
         methods: ['GET', 'POST'],
         credentials: true,
         allowedHeaders: ['Content-Type', 'Authorization']
       },
       transports: ['websocket', 'polling'],
       pingTimeout: 60000,
-      pingInterval: 25000
+      pingInterval: 25000,
+      path: '/socket.io/',
+      serveClient: false
     });
 
     // Socket.io connection handling

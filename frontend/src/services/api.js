@@ -2,6 +2,15 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+  headers: {
+    'Accept': 'application/json',
+  }
+});
+
 /**
  * Upload a single file to the server
  * 
@@ -13,10 +22,11 @@ export const uploadFile = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
     
-    const response = await axios.post(`${API_BASE_URL}/api/upload`, formData, {
+    const response = await api.post('/api/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      withCredentials: true,
     });
     
     return response.data;
@@ -64,7 +74,7 @@ export const uploadFolder = async (files, folderName, fileMap) => {
       }
     };
     
-    const response = await axios.post(`${API_BASE_URL}/api/upload-folder`, formData, config);
+    const response = await api.post('/api/upload-folder', formData, config);
     return response.data;
   } catch (error) {
     console.error('Error uploading folder:', error);
@@ -79,7 +89,7 @@ export const uploadFolder = async (files, folderName, fileMap) => {
  */
 export const createSession = async () => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/api/create-session`);
+    const response = await api.post('/api/create-session');
     return response.data;
   } catch (error) {
     console.error('Error creating session:', error);
@@ -116,8 +126,8 @@ export const uploadToSession = async (sessionId, files, options = {}) => {
       }
     });
     
-    const response = await axios.post(
-      `${API_BASE_URL}/api/session/${sessionId}/upload`, 
+    const response = await api.post(
+      `/api/session/${sessionId}/upload`, 
       formData,
       {
         headers: {
@@ -145,7 +155,7 @@ export const uploadToSession = async (sessionId, files, options = {}) => {
  */
 export const getSessionFiles = async (sessionId) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/session/${sessionId}`);
+    const response = await api.get(`/api/session/${sessionId}`);
     return response.data;
   } catch (error) {
     console.error('Error getting session files:', error);

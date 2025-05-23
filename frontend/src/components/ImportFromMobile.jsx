@@ -4,7 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Smartphone, Download, RefreshCw, Loader2, FileDown, Archive } from 'lucide-react';
 
 import { createSession, getSessionFiles } from '../services/api';
-import { initSocket, joinSession, onFilesAdded, disconnectSocket } from '../services/socket';
+import { initSocket, joinSession, onFilesAdded, disconnectSocket, isSocketConnected } from '../services/socket';
 import { formatFileSize, getFileIcon } from '../utils/helpers';
 
 const ImportFromMobile = () => {
@@ -13,7 +13,7 @@ const ImportFromMobile = () => {
   const [error, setError] = useState('');
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
   const [receivedFiles, setReceivedFiles] = useState([]);
-  const [socket, setSocket] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
   
   // Initialize the session
   const handleCreateSession = async () => {
@@ -27,12 +27,20 @@ const ImportFromMobile = () => {
       const sessionData = await createSession();
       setSession(sessionData);
       
-      // Wait for QR code to be visible before joining socket room
-      setTimeout(() => {
-        const newSocket = initSocket();
-        setSocket(newSocket);
-        joinSession(sessionData.sessionId);
-      }, 500);
+      // Initialize socket and join session
+      const socket = initSocket();
+      if (socket) {
+        setIsConnected(socket.connected);
+        socket.on('connect', () => setIsConnected(true));
+        socket.on('disconnect', () => setIsConnected(false));
+        
+        // Wait for QR code to be visible before joining socket room
+        setTimeout(() => {
+          if (isSocketConnected()) {
+            joinSession(sessionData.sessionId);
+          }
+        }, 500);
+      }
       
     } catch (err) {
       console.error('Failed to create session:', err);
@@ -44,8 +52,8 @@ const ImportFromMobile = () => {
   
   // Reset the session
   const handleResetSession = () => {
-    disconnectSocket(); // This will handle all cleanup
-    setSocket(null);
+    disconnectSocket();
+    setIsConnected(false);
     setSession(null);
     setReceivedFiles([]);
     setError('');
@@ -53,8 +61,6 @@ const ImportFromMobile = () => {
   
   // Download all files as zip (placeholder)
   const handleDownloadAll = () => {
-    // In a full implementation, this would trigger a backend call to zip files
-    // and return a single download
     alert('In a complete implementation, this would download all files as a zip.');
   };
   
@@ -62,10 +68,15 @@ const ImportFromMobile = () => {
   useEffect(() => {
     if (!session) return;
     
-    let currentSocket = socket;
-    if (!currentSocket) {
-      currentSocket = initSocket();
-      setSocket(currentSocket);
+    const socket = initSocket();
+    if (socket) {
+      setIsConnected(socket.connected);
+      socket.on('connect', () => setIsConnected(true));
+      socket.on('disconnect', () => setIsConnected(false));
+      
+      if (socket.connected) {
+        joinSession(session.sessionId);
+      }
     }
     
     const removeListener = onFilesAdded((data) => {
@@ -81,8 +92,8 @@ const ImportFromMobile = () => {
       handleResetSession();
     };
 
-    if (currentSocket) {
-      currentSocket.on('sessionError', handleSessionError);
+    if (socket) {
+      socket.on('sessionError', handleSessionError);
     }
     
     // Check if any files were already uploaded to this session
@@ -109,8 +120,10 @@ const ImportFromMobile = () => {
       if (removeListener) {
         removeListener();
       }
-      if (currentSocket) {
-        currentSocket.off('sessionError', handleSessionError);
+      if (socket) {
+        socket.off('sessionError', handleSessionError);
+        socket.off('connect');
+        socket.off('disconnect');
       }
     };
   }, [session]);
