@@ -30,4 +30,6 @@ services:
       - key: CLOUDINARY_API_SECRET
         value: s9BmPcCvXj8Z-mKEfy2B42iBy4k
       - key: CLIENT_URL
-        value: https://quick-share-black.vercel.app/
+        value: https://quick-share-black.vercel.app
+      - key: CORS_ORIGIN
+        value: https://quick-share-black.vercel.app
