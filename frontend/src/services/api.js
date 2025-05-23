@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://quickshare-wwjh.onrender.com'
+// 'http://localhost:5000';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -8,7 +9,9 @@ const api = axios.create({
   withCredentials: true,
   headers: {
     'Accept': 'application/json',
-  }
+    'Content-Type': 'application/json'
+  },
+  timeout: 10000
 });
 
 /**

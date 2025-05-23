@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "https://quickshare-wwjh.onrender.com"
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'https://quickshare-wwjh.onrender.com'
 // || 'http://localhost:5000';
 
 // Create singleton socket instance
@@ -17,13 +17,14 @@ export const initSocket = () => {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      transports: ['polling', 'websocket'], // Try polling first
+      transports: ['polling', 'websocket'],
       withCredentials: true,
       timeout: 10000,
-      path: '/socket.io/',
+      path: '/socket.io',
       autoConnect: true,
       forceNew: true,
-      secure: true
+      secure: true,
+      rejectUnauthorized: false
     });
     
     socket.on('connect', () => {
@@ -33,7 +34,7 @@ export const initSocket = () => {
     
     socket.on('disconnect', (reason) => {
       console.log('Socket disconnected. Reason:', reason);
-      // Attempt to reconnect on disconnect
+      isConnecting = false;
       if (reason === 'io server disconnect') {
         socket.connect();
       }
@@ -49,9 +50,10 @@ export const initSocket = () => {
           transportType: socket.io?.engine?.transport?.name || 'unknown'
         }
       });
-      // Try to reconnect with polling if websocket fails
       isConnecting = false;
-      if (socket.io.engine.transport.name === 'websocket') {
+      
+      // Try to reconnect with polling if websocket fails
+      if (socket.io?.engine?.transport?.name === 'websocket') {
         socket.io.engine.transport.name = 'polling';
         socket.connect();
       }
