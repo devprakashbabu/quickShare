@@ -12,6 +12,13 @@ import { initSocket } from './services/socket';
 const App = () => {
   // Initialize socket connection
   React.useEffect(() => {
+    // Log environment variables for debugging
+    console.log('Environment Variables:', {
+      API_URL: process.env.REACT_APP_API_URL,
+      SOCKET_URL: process.env.REACT_APP_SOCKET_URL,
+      NODE_ENV: process.env.NODE_ENV
+    });
+
     initSocket();
     
     return () => {

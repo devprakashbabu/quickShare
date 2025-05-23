@@ -8,22 +8,39 @@ let listeners = new Map();
 
 export const initSocket = () => {
   if (!socket) {
+    console.log('Initializing socket connection to:', SOCKET_URL);
+    
     socket = io(SOCKET_URL, {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
+      timeout: 10000,
     });
     
     socket.on('connect', () => {
-      console.log('Socket connected successfully');
+      console.log('Socket connected successfully with ID:', socket.id);
     });
     
-    socket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected. Reason:', reason);
     });
     
     socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+      console.error('Socket connection error:', {
+        message: error.message,
+        description: error.description,
+        type: error.type,
+        context: {
+          url: SOCKET_URL,
+          transportType: socket.io.engine.transport.name
+        }
+      });
+    });
+
+    socket.on('error', (error) => {
+      console.error('Socket general error:', error);
     });
   }
   

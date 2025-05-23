@@ -436,21 +436,28 @@ const startServer = async () => {
       cors: {
         origin: process.env.CLIENT_URL || 'http://localhost:3000',
         methods: ['GET', 'POST'],
-        credentials: true
-      }
+        credentials: true,
+        allowedHeaders: ['Content-Type', 'Authorization']
+      },
+      transports: ['websocket', 'polling'],
+      pingTimeout: 60000,
+      pingInterval: 25000
     });
 
     // Socket.io connection handling
     io.on('connection', async (socket) => {
       console.log('New client connected:', socket.id);
+      console.log('Client origin:', socket.handshake.headers.origin);
       
       // Client joins session
       socket.on('joinSession', async (sessionId) => {
         try {
+          console.log(`Client ${socket.id} attempting to join session ${sessionId}`);
           const session = await Session.findByPk(sessionId);
+          
           if (session && new Date() <= session.expiresAt) {
             socket.join(sessionId);
-            console.log(`Client ${socket.id} joined session ${sessionId}`);
+            console.log(`Client ${socket.id} joined session ${sessionId} successfully`);
             
             // Send current session files to the client
             socket.emit('filesAdded', {
@@ -458,6 +465,7 @@ const startServer = async () => {
               sessionId
             });
           } else {
+            console.log(`Session ${sessionId} not found or expired for client ${socket.id}`);
             socket.emit('sessionError', { 
               error: 'Session not found or expired'
             });
@@ -471,8 +479,12 @@ const startServer = async () => {
       });
       
       // Handle disconnection
-      socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id);
+      socket.on('disconnect', (reason) => {
+        console.log('Client disconnected:', socket.id, 'Reason:', reason);
+      });
+
+      socket.on('error', (error) => {
+        console.error('Socket error for client', socket.id, ':', error);
       });
     });
 
