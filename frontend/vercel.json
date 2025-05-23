@@ -10,7 +10,7 @@
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://quickshareqr-backend.onrender.com",
-    "REACT_APP_SOCKET_URL": "https://quickshareqr-backend.onrender.com"
+    "REACT_APP_API_URL": "https://quickshare-wwjh.onrender.com",
+    "REACT_APP_SOCKET_URL": "https://quickshare-wwjh.onrender.com"
   }
 } 
