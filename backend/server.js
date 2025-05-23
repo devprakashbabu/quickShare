@@ -334,6 +334,7 @@ app.post('/api/session/:sessionId/upload', upload.array('files', 10), async (req
     if (uploadedFiles.length === 0) {
       return res.status(400).json({ error: 'No valid files were uploaded' });
     }
+    // kljsf
     
     // Update session with new files
     session.files = [...(session.files || []), ...uploadedFiles];
