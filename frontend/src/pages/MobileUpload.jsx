@@ -4,7 +4,7 @@ import { Upload, CheckCircle, AlertCircle, ArrowLeft, File, Folder } from 'lucid
 import { uploadToSession } from '../services/api';
 import io from 'socket.io-client';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'https://quickshare-wwjh.onrender.com';
 
 const MobileUpload = () => {
   const [sessionId, setSessionId] = useState('');
