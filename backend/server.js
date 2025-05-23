@@ -37,7 +37,12 @@ app.use(express.urlencoded({ extended: true }));
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
-    cb(null, './uploads');
+    // Ensure uploads directory exists
+    const uploadDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
   },
   filename: function(req, file, cb) {
     cb(null, Date.now() + '-' + file.originalname);
@@ -281,36 +286,47 @@ app.post('/api/create-session', async (req, res) => {
 app.post('/api/session/:sessionId/upload', upload.array('files', 10), async (req, res) => {
   try {
     const { sessionId } = req.params;
+    console.log('Upload request received for session:', sessionId);
+    
     const session = await Session.findByPk(sessionId);
     
     if (!session) {
+      console.log('Session not found:', sessionId);
       return res.status(404).json({ error: 'Session not found or expired' });
     }
     
     if (new Date() > session.expiresAt) {
+      console.log('Session expired:', sessionId);
       await session.destroy();
       return res.status(404).json({ error: 'Session expired' });
     }
 
     if (!req.files || req.files.length === 0) {
+      console.log('No files uploaded');
       return res.status(400).json({ error: 'No files uploaded' });
     }
     
     const uploadedFiles = [];
     
     for (const file of req.files) {
-      // Validate file size and content
-      if (!file.size || file.size === 0) {
-        continue; // Skip empty files
-      }
-
       try {
+        console.log('Processing file:', file.originalname);
+        
+        // Validate file size and content
+        if (!file.size || file.size === 0) {
+          console.log('Invalid file size for:', file.originalname);
+          continue;
+        }
+
         const result = await cloudinary.uploader.upload(file.path, {
           resource_type: 'auto',
           folder: 'quick-share-qr/sessions',
           public_id: `session_${sessionId}_${Date.now()}_${uploadedFiles.length}`
         });
         
+        console.log('File uploaded to Cloudinary:', file.originalname);
+        
+        // Clean up local file
         fs.unlinkSync(file.path);
         
         const fileData = {
@@ -334,7 +350,6 @@ app.post('/api/session/:sessionId/upload', upload.array('files', 10), async (req
     if (uploadedFiles.length === 0) {
       return res.status(400).json({ error: 'No valid files were uploaded' });
     }
-    // kljsf sdsfdsf
     
     // Update session with new files
     session.files = [...(session.files || []), ...uploadedFiles];

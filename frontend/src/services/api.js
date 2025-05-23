@@ -117,6 +117,14 @@ export const createSession = async () => {
  */
 export const uploadToSession = async (sessionId, files, options = {}) => {
   try {
+    if (!sessionId) {
+      throw new Error('Session ID is required');
+    }
+
+    if (!files || files.length === 0) {
+      throw new Error('No files selected');
+    }
+
     const formData = new FormData();
     
     // Add folder information if it's a folder upload
@@ -144,13 +152,25 @@ export const uploadToSession = async (sessionId, files, options = {}) => {
         onUploadProgress: progressEvent => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           console.log(`Upload progress: ${percentCompleted}%`);
-        }
+        },
+        timeout: 30000, // 30 second timeout
+        maxContentLength: 50 * 1024 * 1024, // 50MB max size
+        maxBodyLength: 50 * 1024 * 1024 // 50MB max size
       }
     );
     
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Upload failed');
+    }
+    
     return response.data;
   } catch (error) {
-    console.error('Error uploading to session:', error);
+    console.error('Error uploading to session:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      sessionId
+    });
     throw error;
   }
 };
