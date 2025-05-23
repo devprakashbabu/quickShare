@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "https://quickshare-wwjh.onrender.com"
+// || 'http://localhost:5000';
 
 // Create singleton socket instance
 let socket = null;
